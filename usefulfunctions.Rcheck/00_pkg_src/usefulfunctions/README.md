@@ -1,7 +1,5 @@
 # r-utility-functions
 
-[![R-CMD-check](https://github.com/Eomesodermin/r-utility-functions/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/Eomesodermin/r-utility-functions/actions/workflows/R-CMD-check.yaml)
-
 An R package (`usefulfunctions`) bundling reusable helper functions I use regularly across
 bioinformatics and single-cell analysis. Packaging them keeps analysis code clean and
 reproducible — several published and in-preparation manuscripts rely on functions from this

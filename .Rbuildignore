@@ -1,3 +1,9 @@
-^usefulfunctions\.Rproj$
-^\.Rproj\.user$
+^.*\.Rproj$
 ^LICENSE\.md$
+^NEWS\.md$
+^README\.md$
+^R_old$
+^\.Rproj\.user$
+^\.git$
+^\.github$
+^usefulfunctions\.Rproj$
