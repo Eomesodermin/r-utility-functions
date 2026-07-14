@@ -57,3 +57,11 @@ size.points.volcano <- size_volcano_points
 #' @rdname custom_enhanced_volcano
 #' @export
 custom.enhanced.volcano <- custom_enhanced_volcano
+
+#' @rdname sc_correlation
+#' @export
+sc.correlation <- sc_correlation
+
+#' @rdname correlation_heatmaps
+#' @export
+correlation.heatmaps <- correlation_heatmaps
