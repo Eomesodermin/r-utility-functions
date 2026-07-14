@@ -7,7 +7,7 @@ test_that("make_transparent adds alpha and validates input", {
 })
 
 test_that("makeTransparent alias matches new function", {
-  expect_identical(makeTransparent("blue", 30), make_transparent("blue", 30))
+  expect_identical(makeTransparent, make_transparent)
 })
 
 test_that("get_batlow returns n colours", {

@@ -9,6 +9,6 @@ test_that("moving_average centred window averages available (non-NA) neighbours"
 })
 
 test_that("calc.moving.average alias matches new function", {
-  expect_identical(calc.moving.average(c(1, 2, 3), n = 2),
-                   moving_average(c(1, 2, 3), n = 2))
+  expect_identical(calc.moving.average, moving_average)
+
 })
