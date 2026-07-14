@@ -21,3 +21,11 @@ basic.heatmap <- basic_heatmap
 #' @rdname dendrogram_samples
 #' @export
 dendrogram <- dendrogram_samples
+
+#' @rdname convert_genes
+#' @export
+convert.mouse.to.human <- convert_mouse_to_human
+
+#' @rdname convert_genes
+#' @export
+convert.human.to.mouse <- convert_human_to_mouse
