@@ -13,6 +13,9 @@
 #' @importFrom rlang .data
 #' @export
 clean_volcano_data <- function(input.data, sig.only = TRUE) {
+  if (!all(c("FDR", "logFC") %in% names(input.data))) {
+    stop("`input.data` must contain 'FDR' and 'logFC' columns.", call. = FALSE)
+  }
   if (sig.only) {
     input.data %>%
       dplyr::filter(.data$FDR < 0.05) %>%

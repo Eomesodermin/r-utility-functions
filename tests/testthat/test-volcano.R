@@ -20,3 +20,7 @@ test_that("volcano legacy aliases forward", {
   expect_identical(colour.points.volcano, colour_volcano_points)
   expect_identical(custom.enhanced.volcano, custom_enhanced_volcano)
 })
+
+test_that("clean_volcano_data requires FDR and logFC columns", {
+  expect_error(clean_volcano_data(data.frame(a = 1, b = 2)))
+})

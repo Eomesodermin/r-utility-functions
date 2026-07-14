@@ -10,20 +10,22 @@ make_transparent(color, percent = 50, name = NULL)
 makeTransparent(color, percent = 50, name = NULL)
 }
 \arguments{
-\item{color}{A colour, e.g. \code{"red"} or \code{"#FF0000"}.}
+\item{color}{A colour or vector of colours (names or hex).}
 
-\item{percent}{Numeric in \verb{[0, 100]}; percentage transparency (0 = opaque).}
+\item{percent}{Numeric in \verb{[0, 100]}; percentage transparency (0 = opaque).
+Recycled against \code{color}.}
 
-\item{name}{Optional name for the returned colour.}
+\item{name}{Optional name(s) for the returned colour(s).}
 }
 \value{
-A hex colour string with alpha.
+A character vector of hex colours with alpha, one per \code{color}.
 }
 \description{
-Adds an alpha channel to a named or hex colour.
+Adds an alpha channel to one or more colours. Vectorised over \code{color}.
 }
 \examples{
 make_transparent("red", percent = 50)
+make_transparent(c("red", "blue", "green"), percent = c(25, 50, 75))
 }
 \author{
 Adapted from Ricardo Oliveros-Ramos.

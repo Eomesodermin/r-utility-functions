@@ -24,6 +24,9 @@ A numeric vector the same length as \code{x}.
 Computes a moving average, handling \code{NA} values gracefully. Adapted from
 Riesenberg et al., Nat. Commun. 2015 (doi:10.1038/ncomms9755) and cookbook-r.com.
 }
+\details{
+\code{n} must be a positive integer; \code{x} must be numeric.
+}
 \examples{
 moving_average(c(1, 2, 3, 4, 5), n = 3)
 moving_average(c(1, NA, 3, 4, 5), n = 2, centered = TRUE)

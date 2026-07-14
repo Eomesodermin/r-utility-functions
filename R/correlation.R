@@ -17,6 +17,7 @@ probe_cor_test <- function(em, gp, method = "pearson") {
 #' @param remove.quantile Drop the lowest-expressed fraction of genes before testing.
 #' @param output.tables Directory to write the results CSV into (created if needed).
 #' @param debug.mode Unused; retained for backwards compatibility.
+#' @param method Correlation method: "pearson" (default), "spearman" or "kendall".
 #' @return A data frame with `GeneID`, `Cor.val`, `P.val` and `FDR`.
 #' @examples
 #' m <- matrix(rnorm(50), nrow = 5,
@@ -25,13 +26,18 @@ probe_cor_test <- function(em, gp, method = "pearson") {
 #' @export
 sc_correlation <- function(data.slot, goi = "NKG7", remove.quantile = 0.3,
                            output.tables = "results/tables/Correlation_analysis/",
-                           debug.mode = FALSE) {
+                           debug.mode = FALSE,
+                           method = c("pearson", "spearman", "kendall")) {
+  method <- match.arg(method)
+  if (!goi %in% rownames(data.slot)) {
+    stop("`goi` (", goi, ") is not a rowname of `data.slot`.", call. = FALSE)
+  }
   if (!dir.exists(output.tables)) dir.create(output.tables, recursive = TRUE)
   q.val <- stats::quantile(rowMeans(data.slot), probs = remove.quantile)
   filt.data <- data.slot[rowMeans(data.slot) >= q.val, ]
-  cor.res <- as.data.frame(sort(probe_cor(filt.data, gp = goi), decreasing = TRUE))
+  cor.res <- as.data.frame(sort(probe_cor(filt.data, gp = goi, method = method), decreasing = TRUE))
   colnames(cor.res) <- "Cor.val"
-  pv <- probe_cor_test(filt.data, gp = goi)
+  pv <- probe_cor_test(filt.data, gp = goi, method = method)
   pv <- unlist(sapply(pv, "[", "p.value"))
   names(pv) <- gsub(".p.value", "", names(pv))
   pv <- as.data.frame(sort(pv, decreasing = FALSE)); colnames(pv) <- "P.val"

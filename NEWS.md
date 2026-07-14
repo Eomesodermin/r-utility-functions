@@ -11,3 +11,11 @@ Ground-up rebuild — lighter, tested, fully documented.
 * **Curated merge** of the useful functions from `r-bioinformatics-utils`; project-specific
   / buggy functions there were intentionally excluded.
 * Added unit tests (testthat) and continuous integration (`R CMD check` on every push).
+* **Function improvements & functionality:**
+  * `make_transparent()` is now vectorised over multiple colours.
+  * `get_batlow()` gains a `rev` argument and validates `n`.
+  * `standardize()` is robust to constant (zero-MAD) rows and gains `na.rm`.
+  * `sc_correlation()` gains a `method` argument (pearson/spearman/kendall) and validates `goi`.
+  * `moving_average()` and `clean_volcano_data()` validate their inputs with clear errors.
+  * Expanded the testthat suite to cover the new behaviour and edge cases.
+

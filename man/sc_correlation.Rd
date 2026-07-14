@@ -10,7 +10,8 @@ sc_correlation(
   goi = "NKG7",
   remove.quantile = 0.3,
   output.tables = "results/tables/Correlation_analysis/",
-  debug.mode = FALSE
+  debug.mode = FALSE,
+  method = c("pearson", "spearman", "kendall")
 )
 
 sc.correlation(
@@ -18,7 +19,8 @@ sc.correlation(
   goi = "NKG7",
   remove.quantile = 0.3,
   output.tables = "results/tables/Correlation_analysis/",
-  debug.mode = FALSE
+  debug.mode = FALSE,
+  method = c("pearson", "spearman", "kendall")
 )
 }
 \arguments{
@@ -32,6 +34,8 @@ Seurat \code{data} slot as a matrix.}
 \item{output.tables}{Directory to write the results CSV into (created if needed).}
 
 \item{debug.mode}{Unused; retained for backwards compatibility.}
+
+\item{method}{Correlation method: "pearson" (default), "spearman" or "kendall".}
 }
 \value{
 A data frame with \code{GeneID}, \code{Cor.val}, \code{P.val} and \code{FDR}.

@@ -4,11 +4,15 @@ test_that("moving_average trailing window is correct", {
 })
 
 test_that("moving_average centred window averages available (non-NA) neighbours", {
-  # centred n=3 at position 2 averages positions 1 and 3 (NA skipped)
   expect_equal(moving_average(c(2, NA, 4), n = 3, centered = TRUE)[2], 3)
 })
 
-test_that("calc.moving.average alias matches new function", {
-  expect_identical(calc.moving.average, moving_average)
+test_that("moving_average validates its inputs", {
+  expect_error(moving_average("a", n = 2))
+  expect_error(moving_average(1:5, n = 0))
+  expect_error(moving_average(1:5, n = 2.5))
+})
 
+test_that("calc.moving.average alias equals new function", {
+  expect_identical(calc.moving.average, moving_average)
 })

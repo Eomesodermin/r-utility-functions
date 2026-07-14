@@ -5,12 +5,14 @@
 \alias{Get.batlow}
 \title{Batlow colour palette}
 \usage{
-get_batlow(n = 100)
+get_batlow(n = 100, rev = FALSE)
 
-Get.batlow(n = 100)
+Get.batlow(n = 100, rev = FALSE)
 }
 \arguments{
-\item{n}{Number of colours to return.}
+\item{n}{Number of colours to return (>= 1).}
+
+\item{rev}{If \code{TRUE}, reverse the palette order.}
 }
 \value{
 A character vector of hex colours.
@@ -20,4 +22,5 @@ Returns \code{n} colours from the perceptually-uniform \pkg{scico} "batlow" pale
 }
 \examples{
 get_batlow(5)
+get_batlow(5, rev = TRUE)
 }
