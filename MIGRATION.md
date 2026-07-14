@@ -1,4 +1,4 @@
-# v0.2 rebuild — migration status
+# v0.2 rebuild — migration status: COMPLETE ✅
 
 Ground-up rebuild to a lighter, tested, documented package. Pattern per function:
 snake_case name (primary) + dot.case deprecated alias (in `zzz.R`) + heavy deps
@@ -19,7 +19,10 @@ guarded via `requireNamespace()` and moved to `Suggests`. Every batch keeps
 | `go_enrichment` | `GO.function` | enrichment.R | clusterProfiler, org.*.eg.db |
 | `umap_optimise` | `UMAP.optimise` | single_cell.R | Seurat |
 
-## Still to migrate (present on `main`)
+## Migrated in later batches
+- Volcano suite, single-cell correlation, and TCGA survival — all done.
+
+## (was) Still to migrate
 - **Volcano plots** (volcano.R, ~370 lines): `custom_enhanced_volcano` + helpers
   `clean_volcano_data`, `colour_volcano_points`, `alpha_volcano_points`,
   `size_volcano_points`  (ggplot2 Imports; ggrepel, ggalt → Suggests)

@@ -65,3 +65,11 @@ sc.correlation <- sc_correlation
 #' @rdname correlation_heatmaps
 #' @export
 correlation.heatmaps <- correlation_heatmaps
+
+#' @rdname download_tcga_rnaseq
+#' @export
+download.TCGA.RNAseq <- download_tcga_rnaseq
+
+#' @rdname tcga_survival
+#' @export
+TCGA.OS <- tcga_survival

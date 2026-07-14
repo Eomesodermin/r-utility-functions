@@ -1,13 +1,13 @@
-# usefulfunctions 0.2.0 (in development)
+# usefulfunctions 0.2.0
 
-Ground-up rebuild for a lighter, better-documented, tested package.
+Ground-up rebuild — lighter, tested, fully documented.
 
 * **Light install:** heavy Bioconductor dependencies (Seurat, TCGAbiolinks, biomaRt,
-  clusterProfiler, org.*.eg.db, …) moved to `Suggests`; the package now installs quickly.
-  Removed the CRAN-archived `cgdsr` dependency.
-* **Modern API:** functions renamed to snake_case (e.g. `make_transparent`, `moving_average`,
-  `get_batlow`). Old dot.case names (`makeTransparent`, `calc.moving.average`, `Get.batlow`)
-  are kept as deprecated aliases, so existing scripts keep working.
-* **Bug fix:** `get_batlow()` now returns the palette instead of assigning into the global
-  environment.
-* Added unit tests and continuous integration (`R CMD check` on every push).
+  clusterProfiler, org.*.eg.db, gplots, factoextra, ape, ggrepel, ggalt) moved to
+  `Suggests` and checked at call time. Removed the CRAN-archived `cgdsr` dependency.
+* **Modern API:** all functions renamed to snake_case; the old dot.case names are kept
+  as deprecated aliases, so nothing breaks.
+* **Bug fix:** `get_batlow()` returns the palette instead of assigning to the global env.
+* **Curated merge** of the useful functions from `r-bioinformatics-utils`; project-specific
+  / buggy functions there were intentionally excluded.
+* Added unit tests (testthat) and continuous integration (`R CMD check` on every push).
