@@ -1,297 +1,99 @@
-#' @title Clean data for volcano plot
-#' @author Dillon Corvino
-#' @description Clean std RNAseq formatted data for plotting in volcano plot
+#' Prepare a table for volcano plotting
 #'
+#' Keeps just the `FDR` and `logFC` columns (optionally only significant rows).
 #'
-#' @param input.data data.frame for filtering, should have column FDR and logFC
-#' @param sig.only logical only keep significant FDR < 0.05 genes
-#'
-#' @return data.frame which contains only necessary data for volcano plotting
-#'
+#' @param input.data Data frame with `FDR` and `logFC` columns.
+#' @param sig.only If `TRUE`, keep only rows with `FDR < 0.05`.
+#' @return A data frame with `FDR` and `logFC`.
 #' @examples
-#'
-#' # "EnhancedVolcano" package from Github repo
-#' # devtools::install_github('kevinblighe/EnhancedVolcano')
-#'
-#' # Clean data for plotting in volcano
-#' volcano.data <- clean.data.volcano(volcano.data, sig.only = FALSE)
-#'
-#' # Create vector of top up/down-regulated genes to highlight
-#' goi.up <- volcano.data %>%
-#' dplyr::filter(FDR < 0.05) %>%
-#' top_n(10, logFC)
-#'
-#' goi.dn <- volcano.data %>%
-#' dplyr::filter(FDR < 0.05) %>%
-#' top_n(-10, logFC)
-#'
-#' # combine vectors
-#' goi <- unique(c(rownames(goi.up), rownames(goi.dn)))
-#'
-#' keyvals <- colour.points.volcano(volcano.data,
-#'                                  highlight.selected = TRUE,
-#'                                  selected.cols = c("Green", "Orange"),
-#'                                  highlight.genes = goi)
-#'
-#' size.vec <- size.points.volcano(volcano.data,
-#'                                 highlight.genes = goi)
-#'
-#' alpha.vec <- alpha.points.volcano(volcano.data,
-#'                                   highlight.genes = goi)
-#'
-#'
-#'custom.enhanced.volcano(volcano.data,
-#'                        selectLab = goi,
-#'                        pointSize = size.vec,
-#'                        colAlpha = alpha.vec,
-#'                        colCustom = keyvals,
-#'                        FCcutoff = 1,
-#'                        title = "Spleen_Pos_vs_Neg_Manuscript")
+#' df <- data.frame(FDR = c(0.01, 0.2), logFC = c(2, -0.3),
+#'                  row.names = c("A", "B"))
+#' clean_volcano_data(df, sig.only = TRUE)
+#' @importFrom magrittr %>%
+#' @importFrom rlang .data
 #' @export
-
-clean.data.volcano <- function(input.data, sig.only = TRUE){
-
-  if(sig.only){
-    output.data <- input.data %>%
+clean_volcano_data <- function(input.data, sig.only = TRUE) {
+  if (!all(c("FDR", "logFC") %in% names(input.data))) {
+    stop("`input.data` must contain 'FDR' and 'logFC' columns.", call. = FALSE)
+  }
+  if (sig.only) {
+    input.data %>%
       dplyr::filter(.data$FDR < 0.05) %>%
       dplyr::select(.data$FDR, .data$logFC)
-  }else{
-    output.data <- input.data %>%
-      dplyr::select(.data$FDR, .data$logFC)
+  } else {
+    input.data %>% dplyr::select(.data$FDR, .data$logFC)
   }
-  return(output.data)
 }
 
-
-
-
-
-
-
-
-#' @title Colour points in volcano plot
-#' @author Dillon Corvino
-#' @description This function takes a dataframe of volcano plot data and returns a vector of colours for each gene.
+#' Per-point colours for a volcano plot
 #'
+#' Builds a named colour vector marking up/down-regulated (and optionally
+#' selected) genes, in the `colCustom` format expected by
+#' [custom_enhanced_volcano()].
 #'
-#' @param volcano.data A dataframe of data formatted for plotting as a volcano plot.
-#' @param increase.col The colour to use for genes which are increased.
-#' @param decreased.col The colour to use for genes which are decreased.
-#' @param highlight.selected A logical value indicating whether to highlight selected genes.
-#' @param selected.cols A vector of colours to use for selected genes.
-#' @param highlight.genes A vector of gene names to highlight.
-#' @param FDR.cutoff The FDR cutoff to use for determining which genes are increased/decreased.
-#' @param logFC.cutoff The logFC cutoff to use for determining which genes are increased/decreased.
-#' @return A vector of colours for each gene.
+#' @param volcano.data Data frame with `FDR` and `logFC`, gene symbols as rownames.
+#' @param increase.col,decreased.col Colours for up/down-regulated genes.
+#' @param highlight.selected If `TRUE`, recolour the genes in `highlight.genes`.
+#' @param selected.cols Length-2 colours for selected up / down genes.
+#' @param highlight.genes Character vector of genes to highlight.
+#' @param FDR.cutoff,logFC.cutoff Significance thresholds.
+#' @return A named character vector of colours (one per row).
 #' @examples
-#'
-#' # "EnhancedVolcano" package from Github repo
-#' # devtools::install_github('kevinblighe/EnhancedVolcano')
-#'
-#' # Clean data for plotting in volcano
-#' volcano.data <- clean.data.volcano(volcano.data, sig.only = FALSE)
-#'
-#' # Create vector of top up/down-regulated genes to highlight
-#' goi.up <- volcano.data %>%
-#' dplyr::filter(FDR < 0.05) %>%
-#' top_n(10, logFC)
-#'
-#' goi.dn <- volcano.data %>%
-#' dplyr::filter(FDR < 0.05) %>%
-#' top_n(-10, logFC)
-#'
-#' # combine vectors
-#' goi <- unique(c(rownames(goi.up), rownames(goi.dn)))
-#'
-#' keyvals <- colour.points.volcano(volcano.data,
-#'                                  highlight.selected = TRUE,
-#'                                  selected.cols = c("Green", "Orange"),
-#'                                  highlight.genes = goi)
-#'
-#' size.vec <- size.points.volcano(volcano.data,
-#'                                 highlight.genes = goi)
-#'
-#' alpha.vec <- alpha.points.volcano(volcano.data,
-#'                                   highlight.genes = goi)
-#'
-#'
-#'custom.enhanced.volcano(volcano.data,
-#'                        selectLab = goi,
-#'                        pointSize = size.vec,
-#'                        colAlpha = alpha.vec,
-#'                        colCustom = keyvals,
-#'                        FCcutoff = 1,
-#'                        title = "Spleen_Pos_vs_Neg_Manuscript")
+#' df <- data.frame(FDR = c(0.01, 0.5), logFC = c(2, 0),
+#'                  row.names = c("NKG7", "B"))
+#' colour_volcano_points(df)
 #' @export
-
-
-colour.points.volcano <- function(volcano.data,
-                          increase.col = "Red",
-                          decreased.col = "Blue",
-                          highlight.selected = FALSE,
-                          selected.cols = c("Green", "Orange"),
-                          highlight.genes = "NKG7",
-                          FDR.cutoff = 0.05,
-                          logFC.cutoff = 1){
-
-  # set the base colour
-  keyvals <- rep('grey50', nrow(volcano.data))
-
-  # set the base name/label as 'NS'
-  names(keyvals) <- rep('NS', nrow(volcano.data))
-
-  # modify keyvals for vars meeting FDR and LogFC threshold
-
-  # Increased
-  keyvals[which(volcano.data$logFC > logFC.cutoff & volcano.data$FDR < FDR.cutoff)] <- increase.col
-  names(keyvals)[which(volcano.data$logFC > logFC.cutoff & volcano.data$FDR < FDR.cutoff)] <- 'Increased'
-
-  # Decreased
-  keyvals[which(volcano.data$logFC < -logFC.cutoff & volcano.data$FDR < FDR.cutoff)] <- decreased.col
-  names(keyvals)[which(volcano.data$logFC < -logFC.cutoff & volcano.data$FDR < FDR.cutoff)] <- 'Decreased'
-
-  if(highlight.selected){
-
-    # Selected genes which are increased
-    keyvals[which(volcano.data$logFC > logFC.cutoff & rownames(volcano.data) %in% highlight.genes)] <- selected.cols[1]
-    names(keyvals)[which(volcano.data$logFC > logFC.cutoff & rownames(volcano.data) %in% highlight.genes)] <- 'selected_up'
-
-    # Selected genes which are decreased
-    keyvals[which(volcano.data$logFC < -logFC.cutoff & rownames(volcano.data) %in% highlight.genes)] <- selected.cols[2]
-    names(keyvals)[which(volcano.data$logFC < -logFC.cutoff & rownames(volcano.data) %in% highlight.genes)] <- 'selected_down'
-
-
+colour_volcano_points <- function(volcano.data, increase.col = "Red",
+                                  decreased.col = "Blue", highlight.selected = FALSE,
+                                  selected.cols = c("Green", "Orange"),
+                                  highlight.genes = "NKG7", FDR.cutoff = 0.05,
+                                  logFC.cutoff = 1) {
+  keyvals <- rep("grey50", nrow(volcano.data))
+  names(keyvals) <- rep("NS", nrow(volcano.data))
+  up <- volcano.data$logFC > logFC.cutoff & volcano.data$FDR < FDR.cutoff
+  dn <- volcano.data$logFC < -logFC.cutoff & volcano.data$FDR < FDR.cutoff
+  keyvals[up] <- increase.col;  names(keyvals)[up] <- "Increased"
+  keyvals[dn] <- decreased.col; names(keyvals)[dn] <- "Decreased"
+  if (highlight.selected) {
+    sel <- rownames(volcano.data) %in% highlight.genes
+    keyvals[up & sel] <- selected.cols[1]; names(keyvals)[up & sel] <- "selected_up"
+    keyvals[dn & sel] <- selected.cols[2]; names(keyvals)[dn & sel] <- "selected_down"
   }
-
-  return(keyvals)
-
+  keyvals
 }
 
-
-
-
-#' @title alpha points for volcano plot
-#' @author Dillon Corvino
-#' @description This function is used to set the alpha value for each gene in the plot.
-#' @param input.data A data frame containing the expression data.
-#' @param highlight.genes A vector containing the gene names of interest.
-#' @param baseline.alpha The alpha value for the genes that are not of interest.
-#' @param highlight.alpha The alpha value for the genes of interest.
-#' @return A vector containing the alpha value for each gene.
+#' Per-point alpha for a volcano plot
+#'
+#' @param input.data Data frame with gene symbols as rownames.
+#' @param highlight.genes Genes to draw opaque.
+#' @param baseline.alpha,highlight.alpha Alpha for background / highlighted genes.
+#' @return A numeric vector of alpha values (one per row).
 #' @examples
-#'
-#' # "EnhancedVolcano" package from Github repo
-#' # devtools::install_github('kevinblighe/EnhancedVolcano')
-#'
-#' # Clean data for plotting in volcano
-#' volcano.data <- clean.data.volcano(volcano.data, sig.only = FALSE)
-#'
-#' # Create vector of top up/down-regulated genes to highlight
-#' goi.up <- volcano.data %>%
-#' dplyr::filter(FDR < 0.05) %>%
-#' top_n(10, logFC)
-#'
-#' goi.dn <- volcano.data %>%
-#' dplyr::filter(FDR < 0.05) %>%
-#' top_n(-10, logFC)
-#'
-#' # combine vectors
-#' goi <- unique(c(rownames(goi.up), rownames(goi.dn)))
-#'
-#' keyvals <- colour.points.volcano(volcano.data,
-#'                                  highlight.selected = TRUE,
-#'                                  selected.cols = c("Green", "Orange"),
-#'                                  highlight.genes = goi)
-#'
-#' size.vec <- size.points.volcano(volcano.data,
-#'                                 highlight.genes = goi)
-#'
-#' alpha.vec <- alpha.points.volcano(volcano.data,
-#'                                   highlight.genes = goi)
-#'
-#'
-#'custom.enhanced.volcano(volcano.data,
-#'                        selectLab = goi,
-#'                        pointSize = size.vec,
-#'                        colAlpha = alpha.vec,
-#'                        colCustom = keyvals,
-#'                        FCcutoff = 1,
-#'                        title = "Spleen_Pos_vs_Neg_Manuscript")
+#' df <- data.frame(x = 1:2, row.names = c("NKG7", "B"))
+#' alpha_volcano_points(df, highlight.genes = "NKG7")
 #' @export
-
-
-alpha.points.volcano <- function(input.data,
-                         highlight.genes = "NKG7",
-                         baseline.alpha = 0.1,
-                         highlight.alpha = 1){
-
-  alpha.vec <- rep(baseline.alpha, nrow(input.data))
-
-  alpha.vec[which(rownames(input.data) %in% highlight.genes)] <- highlight.alpha
-
-  return(alpha.vec)
+alpha_volcano_points <- function(input.data, highlight.genes = "NKG7",
+                                 baseline.alpha = 0.1, highlight.alpha = 1) {
+  out <- rep(baseline.alpha, nrow(input.data))
+  out[rownames(input.data) %in% highlight.genes] <- highlight.alpha
+  out
 }
 
-#' @title Size points
-#' @author Dillon Corvino
-#' @description This function is used to set the size of points in a plot
-#' @param input.data A data frame with gene expression data
-#' @param highlight.genes A vector of gene names to be highlighted
-#' @param baseline.size The size of points for genes not in highlight.genes
-#' @param highlight.size The size of points for genes in highlight.genes
-#' @return A vector of point sizes
+#' Per-point size for a volcano plot
+#'
+#' @param input.data Data frame with gene symbols as rownames.
+#' @param highlight.genes Genes to resize.
+#' @param baseline.size,highlight.size Point size for background / highlighted genes.
+#' @return A numeric vector of point sizes (one per row).
 #' @examples
-#'
-#' # "EnhancedVolcano" package from Github repo
-#' # devtools::install_github('kevinblighe/EnhancedVolcano')
-#'
-#' # Clean data for plotting in volcano
-#' volcano.data <- clean.data.volcano(volcano.data, sig.only = FALSE)
-#'
-#' # Create vector of top up/down-regulated genes to highlight
-#' goi.up <- volcano.data %>%
-#' dplyr::filter(FDR < 0.05) %>%
-#' top_n(10, logFC)
-#'
-#' goi.dn <- volcano.data %>%
-#' dplyr::filter(FDR < 0.05) %>%
-#' top_n(-10, logFC)
-#'
-#' # combine vectors
-#' goi <- unique(c(rownames(goi.up), rownames(goi.dn)))
-#'
-#' keyvals <- colour.points.volcano(volcano.data,
-#'                                  highlight.selected = TRUE,
-#'                                  selected.cols = c("Green", "Orange"),
-#'                                  highlight.genes = goi)
-#'
-#' size.vec <- size.points.volcano(volcano.data,
-#'                                 highlight.genes = goi)
-#'
-#' alpha.vec <- alpha.points.volcano(volcano.data,
-#'                                   highlight.genes = goi)
-#'
-#'
-#'custom.enhanced.volcano(volcano.data,
-#'                        selectLab = goi,
-#'                        pointSize = size.vec,
-#'                        colAlpha = alpha.vec,
-#'                        colCustom = keyvals,
-#'                        FCcutoff = 1,
-#'                        title = "Spleen_Pos_vs_Neg_Manuscript")
+#' df <- data.frame(x = 1:2, row.names = c("NKG7", "B"))
+#' size_volcano_points(df, highlight.genes = "NKG7", highlight.size = 8)
 #' @export
-
-
-size.points.volcano <- function(input.data,
-                        highlight.genes = "NKG7",
-                        baseline.size = 5,
-                        highlight.size = 5){
-
-  size.vec <- rep(baseline.size, nrow(input.data))
-
-  size.vec[which(rownames(input.data) %in% highlight.genes)] <- highlight.size
-
-  return(size.vec)
+size_volcano_points <- function(input.data, highlight.genes = "NKG7",
+                                baseline.size = 5, highlight.size = 5) {
+  out <- rep(baseline.size, nrow(input.data))
+  out[rownames(input.data) %in% highlight.genes] <- highlight.size
+  out
 }
 
 #' @title Custom default settings for enhanced volcano plot
@@ -374,48 +176,14 @@ size.points.volcano <- function(input.data,
 #' @param borderWidth A numeric value for the border width
 #' @param borderColour A character vector of the border color
 #' @return A ggplot object
+#' @import ggplot2
 #' @examples
-#'
-#' # "EnhancedVolcano" package from Github repo
-#' # devtools::install_github('kevinblighe/EnhancedVolcano')
-#'
-#' # Clean data for plotting in volcano
-#' volcano.data <- clean.data.volcano(volcano.data, sig.only = FALSE)
-#'
-#' # Create vector of top up/down-regulated genes to highlight
-#' goi.up <- volcano.data %>%
-#' dplyr::filter(FDR < 0.05) %>%
-#' top_n(10, logFC)
-#'
-#' goi.dn <- volcano.data %>%
-#' dplyr::filter(FDR < 0.05) %>%
-#' top_n(-10, logFC)
-#'
-#' # combine vectors
-#' goi <- unique(c(rownames(goi.up), rownames(goi.dn)))
-#'
-#' keyvals <- colour.points.volcano(volcano.data,
-#'                                  highlight.selected = TRUE,
-#'                                  selected.cols = c("Green", "Orange"),
-#'                                  highlight.genes = goi)
-#'
-#' size.vec <- size.points.volcano(volcano.data,
-#'                                 highlight.genes = goi)
-#'
-#' alpha.vec <- alpha.points.volcano(volcano.data,
-#'                                   highlight.genes = goi)
-#'
-#'
-#'custom.enhanced.volcano(volcano.data,
-#'                        selectLab = goi,
-#'                        pointSize = size.vec,
-#'                        colAlpha = alpha.vec,
-#'                        colCustom = keyvals,
-#'                        FCcutoff = 1,
-#'                        title = "Spleen_Pos_vs_Neg_Manuscript")
+#' \dontrun{
+#' custom_enhanced_volcano(my_toptable, FCcutoff = 1, title = "A vs B")
+#' }
 #' @export
 
-custom.enhanced.volcano <- function(toptable,
+custom_enhanced_volcano <- function(toptable,
                                     lab = rownames(toptable),
                                     x = 'logFC',
                                     y = "FDR",
@@ -486,6 +254,9 @@ custom.enhanced.volcano <- function(toptable,
                                     borderColour = "black")
 {
   if (!is.numeric(toptable[[x]])) {
+  if (!requireNamespace("ggrepel", quietly = TRUE)) {
+    stop("Package 'ggrepel' is required for custom_enhanced_volcano(); install it.", call. = FALSE)
+  }
     stop(paste(x, " is not numeric!", sep = ""))
   }
   if (!is.numeric(toptable[[y]])) {
@@ -678,7 +449,7 @@ custom.enhanced.volcano <- function(toptable,
       else {
         arr <- NULL
       }
-      plot <- plot + geom_text_repel(data = subset(toptable,
+      plot <- plot + ggrepel::geom_text_repel(data = subset(toptable,
                                                    toptable[[y]] < pCutoff & abs(toptable[[x]]) >
                                                      FCcutoff), aes(label = subset(toptable, toptable[[y]] <
                                                                                      pCutoff & abs(toptable[[x]]) > FCcutoff)[["lab"]]),
@@ -695,7 +466,7 @@ custom.enhanced.volcano <- function(toptable,
       else {
         arr <- NULL
       }
-      plot <- plot + geom_text_repel(data = subset(toptable,
+      plot <- plot + ggrepel::geom_text_repel(data = subset(toptable,
                                                    !is.na(toptable[["lab"]])), aes(label = subset(toptable,
                                                                                                   !is.na(toptable[["lab"]]))[["lab"]]), size = labSize,
                                      segment.color = colConnectors, segment.size = widthConnectors,
@@ -728,7 +499,7 @@ custom.enhanced.volcano <- function(toptable,
       else {
         arr <- NULL
       }
-      plot <- plot + geom_label_repel(data = subset(toptable,
+      plot <- plot + ggrepel::geom_label_repel(data = subset(toptable,
                                                     toptable[[y]] < pCutoff & abs(toptable[[x]]) >
                                                       FCcutoff), aes(label = subset(toptable, toptable[[y]] <
                                                                                       pCutoff & abs(toptable[[x]]) > FCcutoff)[["lab"]]),
@@ -745,7 +516,7 @@ custom.enhanced.volcano <- function(toptable,
       else {
         arr <- NULL
       }
-      plot <- plot + geom_label_repel(data = subset(toptable,
+      plot <- plot + ggrepel::geom_label_repel(data = subset(toptable,
                                                     !is.na(toptable[["lab"]])), aes(label = subset(toptable,
                                                                                                    !is.na(toptable[["lab"]]))[["lab"]]), size = labSize,
                                       segment.color = colConnectors, segment.size = widthConnectors,
@@ -769,7 +540,7 @@ custom.enhanced.volcano <- function(toptable,
     }
   }
   if (!is.null(encircle)) {
-    plot <- plot + geom_encircle(data = subset(toptable,
+    plot <- plot + ggalt::geom_encircle(data = subset(toptable,
                                                rownames(toptable) %in% encircle), colour = encircleCol,
                                  fill = encircleFill, alpha = encircleAlpha, size = encircleSize,
                                  show.legend = FALSE, na.rm = TRUE)
@@ -783,4 +554,3 @@ custom.enhanced.volcano <- function(toptable,
   }
   return(plot)
 }
-

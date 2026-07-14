@@ -8,16 +8,11 @@
 #' @param centered If `TRUE`, centre the window on each point; otherwise use a
 #'   trailing window.
 #' @return A numeric vector the same length as `x`.
-#' @details `n` must be a positive integer; `x` must be numeric.
 #' @examples
 #' moving_average(c(1, 2, 3, 4, 5), n = 3)
 #' moving_average(c(1, NA, 3, 4, 5), n = 2, centered = TRUE)
 #' @export
 moving_average <- function(x, n = 1, centered = FALSE) {
-  if (!is.numeric(x)) stop("`x` must be numeric.", call. = FALSE)
-  if (length(n) != 1 || n < 1 || n != round(n)) {
-    stop("`n` must be a positive integer.", call. = FALSE)
-  }
   if (centered) {
     before <- floor((n - 1) / 2)
     after  <- ceiling((n - 1) / 2)
