@@ -15,6 +15,6 @@ jobs:
         with:
           use-public-rspm: true
       - name: Install light dependencies
-        run: Rscript -e 'install.packages(c("scico", "dplyr", "magrittr", "rlang", "rcmdcheck", "testthat"))'
+        run: Rscript -e 'install.packages(c("scico", "dplyr", "magrittr", "rlang", "ggplot2", "tibble", "forcats", "rcmdcheck", "testthat"))'
       - name: R CMD check
         run: Rscript -e 'rcmdcheck::rcmdcheck(args = c("--no-manual", "--no-vignettes"), error_on = "warning")'

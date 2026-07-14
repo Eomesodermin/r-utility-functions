@@ -29,3 +29,11 @@ convert.mouse.to.human <- convert_mouse_to_human
 #' @rdname convert_genes
 #' @export
 convert.human.to.mouse <- convert_human_to_mouse
+
+#' @rdname go_enrichment
+#' @export
+GO.function <- go_enrichment
+
+#' @rdname umap_optimise
+#' @export
+UMAP.optimise <- umap_optimise
