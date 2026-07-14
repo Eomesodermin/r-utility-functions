@@ -37,3 +37,23 @@ GO.function <- go_enrichment
 #' @rdname umap_optimise
 #' @export
 UMAP.optimise <- umap_optimise
+
+#' @rdname clean_volcano_data
+#' @export
+clean.data.volcano <- clean_volcano_data
+
+#' @rdname colour_volcano_points
+#' @export
+colour.points.volcano <- colour_volcano_points
+
+#' @rdname alpha_volcano_points
+#' @export
+alpha.points.volcano <- alpha_volcano_points
+
+#' @rdname size_volcano_points
+#' @export
+size.points.volcano <- size_volcano_points
+
+#' @rdname custom_enhanced_volcano
+#' @export
+custom.enhanced.volcano <- custom_enhanced_volcano
