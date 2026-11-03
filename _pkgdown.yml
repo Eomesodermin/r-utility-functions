@@ -1,0 +1,16 @@
+url: https://eomesodermin.github.io/r-utility-functions/
+template:
+  bootstrap: 5
+reference:
+  - title: Plots
+    contents: [volcano_plot, clean_volcano_data, colour_volcano_points, alpha_volcano_points, size_volcano_points, basic_heatmap, dendrogram_samples, plot_correlation]
+  - title: Single-cell
+    contents: [sc_correlation, correlation_heatmaps, umap_optimise]
+  - title: Enrichment and gene identifiers
+    contents: [go_enrichment, convert_genes]
+  - title: TCGA
+    contents: [tcga_survival, download_tcga_rnaseq, stratify_by_expression]
+  - title: Utilities
+    contents: [make_transparent, get_batlow, moving_average, standardize]
+  - title: Deprecated
+    contents: [custom_enhanced_volcano, legacy_aliases]

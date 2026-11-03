@@ -14,7 +14,6 @@
 #' @param ... Further arguments passed to [clusterProfiler::enrichGO()].
 #' @return A ggplot (if `plot = TRUE`) or a clusterProfiler `enrichResult`.
 #' @import ggplot2
-#' @importFrom magrittr %>%
 #' @importFrom rlang .data
 #' @examples
 #' \dontrun{
@@ -24,32 +23,28 @@
 go_enrichment <- function(markers, topn = 1000, org = c("human", "mouse"),
                           title.var = "", plot = TRUE, ontology.type = "BP", ...) {
   org <- match.arg(org)
-  if (!requireNamespace("clusterProfiler", quietly = TRUE)) {
-    stop("Package 'clusterProfiler' (Bioconductor) is required for go_enrichment().",
-         call. = FALSE)
+  require_pkg("clusterProfiler", "go_enrichment()")
+  if (!all(c("gene", "FDR") %in% names(markers))) {
+    stop("`markers` must contain 'gene' and 'FDR' columns.", call. = FALSE)
   }
-  gene_list <- markers %>%
-    dplyr::arrange(.data$FDR) %>%
-    utils::head(topn) %>%
+  gene_list <- markers |>
+    dplyr::arrange(.data$FDR) |>
+    utils::head(topn) |>
     dplyr::pull(.data$gene)
   if (org == "human") {
-    if (!requireNamespace("org.Hs.eg.db", quietly = TRUE)) {
-      stop("Package 'org.Hs.eg.db' (Bioconductor) is required for org = 'human'.", call. = FALSE)
-    }
+    require_pkg("org.Hs.eg.db", "go_enrichment(org = 'human')")
     db <- org.Hs.eg.db::org.Hs.eg.db
   } else {
-    if (!requireNamespace("org.Mm.eg.db", quietly = TRUE)) {
-      stop("Package 'org.Mm.eg.db' (Bioconductor) is required for org = 'mouse'.", call. = FALSE)
-    }
+    require_pkg("org.Mm.eg.db", "go_enrichment(org = 'mouse')")
     db <- org.Mm.eg.db::org.Mm.eg.db
   }
   res <- clusterProfiler::enrichGO(gene = gene_list, OrgDb = db,
                                    ont = ontology.type, keyType = "SYMBOL", ...)
   if (!plot) return(res)
-  df <- tibble::as_tibble(res@result) %>%
-    dplyr::arrange(.data$p.adjust) %>%
-    utils::head(10) %>%
-    dplyr::mutate(Description = as.factor(.data$Description)) %>%
+  df <- tibble::as_tibble(as.data.frame(res)) |>
+    dplyr::arrange(.data$p.adjust) |>
+    utils::head(10) |>
+    dplyr::mutate(Description = as.factor(.data$Description)) |>
     dplyr::mutate(Description = forcats::fct_reorder(.data$Description,
                                                      dplyr::desc(.data$p.adjust)))
   ggplot(df, aes(x = .data$Description, y = -log10(.data$p.adjust))) +

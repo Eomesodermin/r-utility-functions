@@ -21,10 +21,8 @@ basic_heatmap <- function(df, Col.cluster = FALSE, Row.cluster = FALSE,
                           title.var = "", colsepvar = NULL, row.size = 0.4,
                           scale.var = "row", dist.method = "euclidean",
                           hclust.method = "ward.D") {
-  if (!requireNamespace("gplots", quietly = TRUE)) {
-    stop("Package 'gplots' is required for basic_heatmap(); ",
-         "install it with install.packages('gplots').", call. = FALSE)
-  }
+  require_pkg("gplots", "basic_heatmap()")
+  if (!is.numeric(as.matrix(df))) stop("`df` must be numeric.", call. = FALSE)
   dissimfun  <- function(x) stats::dist(x, method = dist.method)
   clusterfun <- function(x) stats::hclust(x, method = hclust.method)
   gplots::heatmap.2(as.matrix(log2(df + 1)),

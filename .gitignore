@@ -11,3 +11,7 @@ Thumbs.db
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
+*.Rcheck/
+*.tar.gz
+docs/
+.Rproj.user/

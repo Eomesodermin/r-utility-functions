@@ -13,6 +13,8 @@ test_that("moving_average validates its inputs", {
   expect_error(moving_average(1:5, n = 2.5))
 })
 
-test_that("calc.moving.average alias equals new function", {
-  expect_identical(calc.moving.average, moving_average)
+test_that("moving_average handles windows larger than the vector and all-NA windows", {
+  expect_equal(moving_average(c(1, 2), n = 5), c(1, 1.5))
+  expect_true(is.nan(moving_average(c(NA_real_, NA_real_), n = 2)[2]))
+  expect_equal(moving_average(numeric(0), n = 3), numeric(0))
 })

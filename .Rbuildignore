@@ -7,3 +7,9 @@
 ^\.git$
 ^\.github$
 ^usefulfunctions\.Rproj$
+^CITATION\.cff$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^codecov\.yml$
+^\.lintr$

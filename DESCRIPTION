@@ -1,21 +1,22 @@
 Package: usefulfunctions
 Title: Reusable Helpers for Single-Cell, Bulk RNA-Seq and Cancer Genomics
-Version: 0.2.0
+Version: 0.3.0
 Authors@R: 
-    person("Dillon", "Corvino", , "dilloncorvino@gmail.com", role = c("aut", "cre"),
+    person("Dillon", "Corvino", , "48763022+Eomesodermin@users.noreply.github.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-0683-1369"))
-Description: A curated collection of helper functions and thin wrappers that Dillon
-    Corvino uses across immunology and cancer-genomics analyses. It bundles utilities
-    for colour handling, differential-expression volcano plots, heatmaps and
-    dendrograms, gene-identifier conversion, gene-set / Gene Ontology enrichment,
-    TCGA survival analysis, and single-cell (Seurat) helpers such as UMAP
-    hyper-parameter optimisation and gene-gene correlation. Heavy Bioconductor
-    dependencies are optional (Suggests) so the package installs quickly; each
-    function checks for the packages it needs at call time.
+Description: Helper functions for immunology and cancer-genomics analyses: colour
+    palettes, differential-expression volcano plots, heatmaps and dendrograms,
+    mouse-human gene-symbol conversion, Gene Ontology over-representation,
+    TCGA overall-survival analysis stratified by gene or signature expression, and
+    single-cell (Seurat) helpers such as UMAP hyper-parameter sweeps and gene-gene
+    correlation. Heavy Bioconductor dependencies are optional (Suggests) so the
+    package installs quickly; each function checks for what it needs at call time.
 License: MIT + file LICENSE
-URL: https://github.com/Eomesodermin/r-utility-functions
+URL: https://github.com/Eomesodermin/r-utility-functions,
+    https://eomesodermin.github.io/r-utility-functions/
 BugReports: https://github.com/Eomesodermin/r-utility-functions/issues
 Encoding: UTF-8
+Language: en-US
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Depends:
@@ -26,7 +27,6 @@ Imports:
     ggplot2 (>= 3.4.0),
     graphics,
     grDevices,
-    magrittr,
     rlang,
     scico (>= 1.3.1),
     stats,
@@ -37,14 +37,17 @@ Suggests:
     biomaRt,
     clusterProfiler,
     factoextra,
-    ggalt,
     ggrepel,
     gplots,
     org.Hs.eg.db,
     org.Mm.eg.db,
     Seurat,
-    stringr,
     TCGAbiolinks,
-    testthat (>= 3.0.0),
+    covr,
+    knitr,
+    rmarkdown,
+    survival,
+    testthat (>= 3.2.0),
     tidyselect
 Config/testthat/edition: 3
+VignetteBuilder: knitr

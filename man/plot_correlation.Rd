@@ -14,21 +14,23 @@ plot_correlation(
 \arguments{
 \item{cor.df}{Output of \code{\link[=sc_correlation]{sc_correlation()}}.}
 
-\item{output.dir}{Directory to write the PDFs into.}
+\item{output.dir}{Directory to write the PDFs into (created if needed). Use
+\code{NULL} to skip writing.}
 
 \item{goi}{Gene(s) of interest to highlight.}
 
-\item{top.n.val}{Number of top-correlated genes to inset.}
+\item{top.n.val}{Number of top-correlated genes to show in the zoom plot.}
 }
 \value{
-Invisibly \code{NULL}; called for the PDFs it writes.
+Invisibly, a list with the \code{ranking} and \code{top} ggplots.
 }
 \description{
 Line plot of ranked correlation values from \code{\link[=sc_correlation]{sc_correlation()}}, highlighting a
-gene of interest and the top hits.
+gene of interest, plus a zoom on the top-correlated genes.
 }
 \examples{
-\dontrun{
-plot_correlation(cor_df, goi = "NKG7", top.n.val = 30)
-}
+m <- matrix(rnorm(400), nrow = 20,
+            dimnames = list(paste0("g", 1:20), paste0("c", 1:20)))
+cor_df <- sc_correlation(m, goi = "g1", remove.quantile = 0, output.tables = NULL)
+plot_correlation(cor_df, output.dir = NULL, goi = "g1", top.n.val = 5)
 }

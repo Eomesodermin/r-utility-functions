@@ -6,18 +6,19 @@
 \alias{usefulfunctions-package}
 \title{usefulfunctions: Reusable Helpers for Single-Cell, Bulk RNA-Seq and Cancer Genomics}
 \description{
-A curated collection of helper functions and thin wrappers that Dillon Corvino uses across immunology and cancer-genomics analyses. It bundles utilities for colour handling, differential-expression volcano plots, heatmaps and dendrograms, gene-identifier conversion, gene-set / Gene Ontology enrichment, TCGA survival analysis, and single-cell (Seurat) helpers such as UMAP hyper-parameter optimisation and gene-gene correlation. Heavy Bioconductor dependencies are optional (Suggests) so the package installs quickly; each function checks for the packages it needs at call time.
+Helper functions for immunology and cancer-genomics analyses: colour palettes, differential-expression volcano plots, heatmaps and dendrograms, mouse-human gene-symbol conversion, Gene Ontology over-representation, TCGA overall-survival analysis stratified by gene or signature expression, and single-cell (Seurat) helpers such as UMAP hyper-parameter sweeps and gene-gene correlation. Heavy Bioconductor dependencies are optional (Suggests) so the package installs quickly; each function checks for what it needs at call time.
 }
 \seealso{
 Useful links:
 \itemize{
   \item \url{https://github.com/Eomesodermin/r-utility-functions}
+  \item \url{https://eomesodermin.github.io/r-utility-functions/}
   \item Report bugs at \url{https://github.com/Eomesodermin/r-utility-functions/issues}
 }
 
 }
 \author{
-\strong{Maintainer}: Dillon Corvino \email{dilloncorvino@gmail.com} (\href{https://orcid.org/0000-0003-0683-1369}{ORCID})
+\strong{Maintainer}: Dillon Corvino \email{48763022+Eomesodermin@users.noreply.github.com} (\href{https://orcid.org/0000-0003-0683-1369}{ORCID})
 
 }
 \keyword{internal}

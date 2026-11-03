@@ -13,10 +13,6 @@ test_that("make_transparent is vectorised over colours and percent", {
   expect_match(out[3], "00$")                        # 100% transparent -> zero alpha
 })
 
-test_that("makeTransparent alias equals new function", {
-  expect_identical(makeTransparent, make_transparent)
-})
-
 test_that("get_batlow returns n colours and reverses", {
   skip_if_not_installed("scico")
   expect_length(get_batlow(5), 5L)

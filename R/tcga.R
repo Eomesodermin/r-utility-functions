@@ -1,405 +1,210 @@
 #' Download a TCGA RNA-seq dataset
 #'
 #' Queries, downloads and prepares a TCGA gene-expression dataset (STAR counts)
-#' via TCGAbiolinks, saving the raw counts to an `.rda` file.
+#' via TCGAbiolinks, saving the prepared table to an `.rda` file.
 #'
 #' @param dataset.name TCGA project id, e.g. `"TCGA-LAML"`.
 #' @param raw.data.dir Directory for the raw GDC download.
 #' @param rda.dir Directory to save the prepared `.rda` into.
-#' @return The prepared raw-count object from [TCGAbiolinks::GDCprepare()].
+#' @return The prepared expression table from [TCGAbiolinks::GDCprepare()].
 #' @examples
 #' \dontrun{
 #' download_tcga_rnaseq("TCGA-LAML")
 #' }
 #' @export
-
-
-
-
-download_tcga_rnaseq <- function(dataset.name,
-                                 raw.data.dir = "GDCdata/",
-                                 rda.dir = "data/"){
-  if (!requireNamespace("TCGAbiolinks", quietly = TRUE)) {
-    stop("Package 'TCGAbiolinks' (Bioconductor) is required for this function.", call. = FALSE)
+download_tcga_rnaseq <- function(dataset.name, raw.data.dir = "GDCdata/", rda.dir = "data/") {
+  require_pkg("TCGAbiolinks", "download_tcga_rnaseq()")
+  for (dir in c(raw.data.dir, rda.dir)) {
+    if (!dir.exists(dir)) dir.create(dir, recursive = TRUE)
   }
-
-  # create directories
-  if(!dir.exists(raw.data.dir)){
-    dir.create(raw.data.dir, recursive = TRUE)
-  }
-
-  if(!dir.exists(rda.dir)){
-    dir.create(rda.dir, recursive = TRUE)
-  }
-
-
-  print(paste0("downloading dataset ", dataset.name))
-
-
-  query.raw.expression.hg38 <- TCGAbiolinks::GDCquery(project = dataset.name,
-                                                      data.category = "Transcriptome Profiling",
-                                                      workflow.type = "STAR - Counts",
-                                                      data.type = "Gene Expression Quantification",
-                                                      experimental.strategy = "RNA-Seq")
-
-  TCGAbiolinks::GDCdownload(query.raw.expression.hg38,
-                            files.per.chunk = 6,
-                            directory = raw.data.dir)
-
-  TCGA.raw.counts <- TCGAbiolinks::GDCprepare(query = query.raw.expression.hg38,
-                                              summarizedExperiment = FALSE,
-                                              save = TRUE,
-                                              save.filename = paste0(rda.dir, dataset.name, "_Transcriptome_Profiling_raw_counts.rda"))
-
-  return(TCGA.raw.counts)
-
+  message("Downloading dataset ", dataset.name)
+  query <- TCGAbiolinks::GDCquery(
+    project = dataset.name,
+    data.category = "Transcriptome Profiling",
+    workflow.type = "STAR - Counts",
+    data.type = "Gene Expression Quantification",
+    experimental.strategy = "RNA-Seq"
+  )
+  TCGAbiolinks::GDCdownload(query, files.per.chunk = 6, directory = raw.data.dir)
+  TCGAbiolinks::GDCprepare(
+    query = query,
+    summarizedExperiment = FALSE,
+    save = TRUE,
+    save.filename = file.path(rda.dir, paste0(dataset.name, "_Transcriptome_Profiling_raw_counts.rda"))
+  )
 }
 
-
-
-load.rda <- function(path.to.rda){
-
-  load(file = path.to.rda)
-  TCGA.raw.counts <- data
-
-  return(TCGA.raw.counts)
-
+# Load the first object stored in an .rda file.
+load_rda <- function(path) {
+  env <- new.env()
+  objects <- load(path, envir = env)
+  if (length(objects) == 0) stop("No objects found in ", path, call. = FALSE)
+  get(objects[1], envir = env)
 }
 
-
-
-
-
-
-
-
-preprocess.TCGA <- function(input.data,
-                            dataset.name = NULL,
-                            quantile.filt = TRUE,
-                            save.normed.data = TRUE,
-                            output.dir = "data/"){
-
-
-  # check that data.set name is defined if save.normed.data is set to TRUE
-  if(save.normed.data & is.null(dataset.name)){
-    stop("save.normed.data is set to TRUE but dataset.name is NULL, please define a dataset.name as this will be used in saving the file")
+# Reduce a prepared TCGA table to protein-coding genes and their TPM columns.
+# Where several rows share a gene symbol, the one with the highest total signal
+# is kept. Returns a data frame with gene symbols as row names.
+select_tcga_tpm <- function(raw) {
+  id_cols <- c("gene_id", "gene_name", "gene_type")
+  if (!all(id_cols %in% names(raw))) {
+    stop("`raw` must contain columns: ", paste(id_cols, collapse = ", "), call. = FALSE)
   }
+  coding <- as.data.frame(raw)[raw$gene_type == "protein_coding", , drop = FALSE]
+  value_cols <- setdiff(names(coding), id_cols)
+  coding <- coding[order(rowSums(coding[, value_cols, drop = FALSE]), decreasing = TRUE), , drop = FALSE]
+  coding <- coding[!duplicated(coding$gene_name), , drop = FALSE]
+  tpm <- coding[, grepl("^tpm_unstranded_", names(coding)), drop = FALSE]
+  if (ncol(tpm) == 0) stop("No 'tpm_unstranded_*' columns found in `raw`.", call. = FALSE)
+  rownames(tpm) <- coding$gene_name
+  tpm
+}
 
-
-
-  # filtering dataset
-  print("Filtering dataset for protein coding etc.")
-
-  filt.data <- input.data %>%
-    dplyr::filter(.data$gene_type == "protein_coding") %>%
-    dplyr::mutate(gene_sum = rowSums(dplyr::select(., -c(gene_id, gene_name, gene_type)))) %>%
-    dplyr::arrange(dplyr::desc(.data$gene_sum)) %>%
-    dplyr::distinct(.data$gene_name, .keep_all = TRUE) %>%
-    tibble::column_to_rownames(var = "gene_name") %>%
-    dplyr::select(-c(gene_id, gene_type, gene_sum)) %>%
-    dplyr::select(tidyselect::matches("tpm_unstranded_.*"))
-
-  # note that dataset contains unstranded, stranded_first, stranded_second, tpm_unstranded, fpkm_unstranded, fpkm_uq_unstranded counts for each sample
-  # use tpm as tpm is best for comparing expression between samples
-
-  print("Normalising by GC content")
-
-  normed.data <- TCGAbiolinks::TCGAanalyze_Normalization(tabDF = filt.data,
-                                                         geneInfo = TCGAbiolinks::geneInfo, # geneInfo or geneInfoHT
-                                                         method = "gcContent")
-
-
-  if(quantile.filt){
-    # filter genes to reduce low expressed genes and false positive results
-    # quantile filter of genes
-    print("Quantile Filtering dataset")
-
-    normed.data <- TCGAbiolinks::TCGAanalyze_Filtering(tabDF = normed.data,
-                                                       method = "quantile",
-                                                       qnt.cut =  0.25)
-
+# GC-content normalisation and quantile filtering (TCGAbiolinks).
+normalise_tcga <- function(tpm, quantile_filter = TRUE) {
+  normed <- TCGAbiolinks::TCGAanalyze_Normalization(
+    tabDF = tpm, geneInfo = TCGAbiolinks::geneInfo, method = "gcContent"
+  )
+  if (quantile_filter) {
+    normed <- TCGAbiolinks::TCGAanalyze_Filtering(tabDF = normed, method = "quantile", qnt.cut = 0.25)
   }
+  normed
+}
 
-
-
-
-  if(save.normed.data){
-    print("Writing normalised & Filtered data to file")
-
-    # Writing Normalised data
-    utils::write.table(normed.data, paste0(output.dir, "Normalised_filtered_", dataset.name, "_RNAseq_data.txt"),
-                sep = "\t", row.names = T, quote = F)
-
-
+#' Split samples into high and low expressers of a gene or signature
+#'
+#' Ranks samples by the expression of one gene, or by a signature score for
+#' several genes (the mean of each gene's z-score across samples), and returns
+#' the samples in the top and bottom quantile.
+#'
+#' @param expr Numeric matrix or data frame of expression (genes x samples), with
+#'   gene symbols as row names and sample identifiers as column names.
+#' @param genes One or more gene symbols present in `rownames(expr)`.
+#' @param quantile Fraction of samples in each tail; `0.25` gives the upper and
+#'   lower quartiles.
+#' @return A list with the sample names in `high` and `low`, and the per-sample
+#'   `score` used for ranking.
+#' @examples
+#' set.seed(1)
+#' expr <- matrix(rexp(200), nrow = 4,
+#'                dimnames = list(c("NKG7", "GZMB", "CD3E", "ACTB"), paste0("s", 1:50)))
+#' strata <- stratify_by_expression(expr, "NKG7")
+#' lengths(strata[c("high", "low")])
+#' stratify_by_expression(expr, c("NKG7", "GZMB"))$high
+#' @export
+stratify_by_expression <- function(expr, genes, quantile = 0.25) {
+  expr <- as.matrix(expr)
+  missing_genes <- setdiff(genes, rownames(expr))
+  if (length(missing_genes)) {
+    stop("Gene(s) not found in `expr`: ", paste(missing_genes, collapse = ", "), call. = FALSE)
   }
-
-  return(normed.data)
-
-}
-
-
-
-
-
-
-threshold.goi <- function(input.data, goi){
-
-
-if(length(goi) == 1){
-
-# extract goi expression data
-  goi.expression <- input.data[goi, ]
-
-  # get some expression summary statistics
-  summary.value <- summary(goi.expression)
-
-  # define upper and lower quartiles of expression
-  upper.quartile <- floor(summary.value[5])
-  lower.quartile <- ceiling(summary.value[2])
-
-# use threshold to define high expressing patients
-  High.exp.logic <- goi.expression >= upper.quartile
-  print(paste0("n with high expression of ", goi, " = ", sum(High.exp.logic)))
-
-  # use threshold to define low expressing patients
-  Low.exp.logic <- goi.expression <= lower.quartile
-  print(paste0("n with low expression of ", goi, " = ", sum(Low.exp.logic)))
-
-  # extract patient IDs
-  patients.high <- names(goi.expression)[High.exp.logic]
-  patients.low <- names(goi.expression)[Low.exp.logic]
-
-  # create list for exporting
-  output.list <- list(patients.high = patients.high,
-                      patients.low = patients.low)
-
-  return(output.list)
-
-}else if(length(goi) > 1){
-
-
-  print("need to add code for multiple goi thresholding")
-}
-
-}
-
-
-
-
-
-annotate.clinical.data <- function(patients.list,
-                                   dataset.name){
-
-  print("Downloading clinical data")
-
-  clin.data <- TCGAbiolinks::GDCquery_clinic(dataset.name, "clinical")
-
-  print("Identifying samples by Gene expression signature")
-
-  # identifying samples by signature
-  high.patients <- stringr::str_extract(patients.list[["patients.high"]],
-                                        pattern = "TCGA-..-....")
-
-  # ensure only unique entries of patients
-  high.patients <- unique(high.patients)
-
-  patients.high.logic <- clin.data$bcr_patient_barcode %in% high.patients
-
-
-  low.patients <- stringr::str_extract(patients.list[["patients.low"]],
-                                       pattern = "TCGA-..-....")
-
-  # ensure only unique entries of patients
-  low.patients <- unique(low.patients)
-
-  patients.low.logic <- clin.data$bcr_patient_barcode %in% low.patients
-
-  # sanity checks
-  # ensure number of patients clinical data recovered is similar to number of patients data requested
-
-  print(paste0("length of patients annotated as high signature score = ", length(high.patients)))
-
-  print(paste0("length of patients annotated as low signature score = ", length(low.patients)))
-
-  print(paste0("retrieved clinical data for ", sum(patients.high.logic), " patients annotated as high goi"))
-
-  print(paste0("retrieved clinical data for ", sum(patients.low.logic), " patients annotated as high goi"))
-
-  # Add annotation to clinical data table
-  print("Add annotation to clinical data table")
-
-  clin.data$Signature[patients.high.logic] <- paste0("High")
-
-  clin.data$Signature[patients.low.logic] <- paste0("Low")
-
-
-  return(clin.data)
-
-}
-
-
-
-
-plot.OS <- function(annotated.clin.data,
-                    dataset.name,
-                    goi,
-                    output.dir = "figures/",
-                    with.risk = TRUE,
-                    with.conf = TRUE){
-
-  # create output directory
-  if(!dir.exists(output.dir)){
-    dir.create(output.dir, recursive = TRUE)
+  if (length(quantile) != 1 || quantile <= 0 || quantile >= 0.5) {
+    stop("`quantile` must be between 0 and 0.5.", call. = FALSE)
   }
-
-
-  print("Generating OS plot")
-
-  if(with.risk & with.conf){
-    title.var <- ""
-  }else if(!with.risk & with.conf){
-    title.var <- "_noRisk"
-  }else if(with.risk & !with.conf){
-    title.var <- "_noCI"
-  }else if(!with.risk & !with.conf){
-    title.var <- "_noRisk_noCI"
+  if (length(genes) == 1) {
+    score <- expr[genes, ]
+  } else {
+    z <- t(scale(t(expr[genes, , drop = FALSE])))
+    score <- colMeans(z, na.rm = TRUE)
   }
-
-
-  # Full plot with CI and risk table
-  TCGAbiolinks::TCGAanalyze_survival(annotated.clin.data,
-                                     clusterCol = "Signature",
-                                     filename = paste0(output.dir, dataset.name, "_overall_survival", title.var, ".pdf"),
-                                     risk.table = with.risk,
-                                     color = c("Red", "Blue"),
-                                     main = paste0("Kaplan-Meier Overall Survival ", dataset.name, " ", goi, " High vs. Low"),
-                                     conf.int = with.conf,
-                                     height = 10,
-                                     width = 10)
-
-
-  print(paste0("OS Plot saved to file.path = ", output.dir))
-
+  cutoffs <- stats::quantile(score, probs = c(quantile, 1 - quantile), na.rm = TRUE)
+  list(
+    high = names(score)[!is.na(score) & score >= cutoffs[[2]]],
+    low = names(score)[!is.na(score) & score <= cutoffs[[1]]],
+    score = score
+  )
 }
 
+# Reduce TCGA sample barcodes to patient barcodes (TCGA-XX-XXXX).
+patient_barcode <- function(ids) {
+  matches <- regmatches(ids, regexpr("TCGA-[A-Za-z0-9]{2}-[A-Za-z0-9]{4}", ids))
+  unique(matches)
+}
 
+# Add a High / Low `Signature` column to GDC clinical data. A patient with
+# samples in both groups is ambiguous and left unlabelled.
+label_signature_groups <- function(clinical, high, low) {
+  high_patients <- patient_barcode(high)
+  low_patients <- patient_barcode(low)
+  ambiguous <- intersect(high_patients, low_patients)
+  if (length(ambiguous)) {
+    message(length(ambiguous), " patient(s) have samples in both groups and are left unlabelled.")
+  }
+  is_high <- clinical$bcr_patient_barcode %in% setdiff(high_patients, ambiguous)
+  is_low <- clinical$bcr_patient_barcode %in% setdiff(low_patients, ambiguous)
+  clinical$Signature <- NA_character_
+  clinical$Signature[is_high] <- "High"
+  clinical$Signature[is_low] <- "Low"
+  message("Clinical data matched for ", sum(is_high), " high and ", sum(is_low), " low patients (",
+          length(high_patients), " and ", length(low_patients), " requested).")
+  clinical
+}
 
-
-
-
-#HNSC.raw.data <- load.rda("TCGA-HNSC_Transcriptome_Profiling_raw_counts.rda")
-#normed.data <- preprocess.TCGA(input.data = HNSC.raw.data, save.normed.data = F)
-
-
+# Kaplan-Meier overall-survival plot via TCGAbiolinks.
+plot_overall_survival <- function(clinical, dataset.name, goi, output.dir = "figures/",
+                                  with.risk = TRUE, with.conf = TRUE) {
+  if (!dir.exists(output.dir)) dir.create(output.dir, recursive = TRUE)
+  suffix <- paste0(if (!with.risk) "_noRisk", if (!with.conf) "_noCI")
+  filename <- file.path(output.dir, paste0(dataset.name, "_overall_survival", suffix, ".pdf"))
+  TCGAbiolinks::TCGAanalyze_survival(
+    clinical,
+    clusterCol = "Signature",
+    filename = filename,
+    risk.table = with.risk,
+    color = c("Red", "Blue"),
+    main = paste0("Kaplan-Meier Overall Survival ", dataset.name, " ", paste(goi, collapse = "+"),
+                  " High vs. Low"),
+    conf.int = with.conf,
+    height = 10,
+    width = 10
+  )
+  message("Survival plot saved to ", filename)
+  invisible(filename)
+}
 
 #' Overall-survival analysis of a TCGA cohort
 #'
 #' Downloads (or loads) a TCGA dataset, normalises it, stratifies patients into
-#' high vs low expression of a gene or signature, and runs a Kaplan-Meier overall
-#' survival analysis.
+#' high and low expressers of a gene or signature (upper vs lower quartile), and
+#' runs a Kaplan-Meier overall-survival analysis.
 #'
 #' @param TCGA.dataset TCGA project id, e.g. `"TCGA-LAML"`.
-#' @param gene.signature Gene, or vector of genes, defining the signature.
+#' @param gene.signature Gene, or vector of genes, defining the signature. With
+#'   several genes the ranking score is the mean z-score (see
+#'   [stratify_by_expression()]).
 #' @param gene.name Optional label (defaults to `gene.signature`).
-#' @param rda.file.path Optional path to a downloaded `.rda`; if `NULL`, data is downloaded.
+#' @param rda.file.path Optional path to a prepared `.rda` from
+#'   [download_tcga_rnaseq()]; if `NULL`, the data are downloaded.
 #' @param plot.dir Directory to save the survival plot into.
-#' @param data.dir Directory for downloaded / normalised data.
-#' @return Called for its side effects (survival plot and tables).
+#' @param data.dir Directory for downloaded and normalised data.
+#' @return Invisibly, the clinical table with the `Signature` (High / Low)
+#'   assignment. The survival plot is written to `plot.dir`.
 #' @examples
 #' \dontrun{
 #' tcga_survival("TCGA-LAML", gene.signature = "TLR2")
 #' }
 #' @export
-tcga_survival <- function(TCGA.dataset,
-                    gene.signature,
-                    gene.name = NULL,
-                    rda.file.path = NULL,
-                    plot.dir = "figures/",
-                    data.dir = "data/"){
-  if (!requireNamespace("TCGAbiolinks", quietly = TRUE)) {
-    stop("Package 'TCGAbiolinks' (Bioconductor) is required for this function.", call. = FALSE)
+tcga_survival <- function(TCGA.dataset, gene.signature, gene.name = NULL, rda.file.path = NULL,
+                          plot.dir = "figures/", data.dir = "data/") {
+  require_pkg("TCGAbiolinks", "tcga_survival()")
+  gene.name <- gene.name %||% gene.signature
+  raw <- if (is.null(rda.file.path)) {
+    download_tcga_rnaseq(TCGA.dataset, raw.data.dir = file.path(data.dir, "GDCdata/"), rda.dir = data.dir)
+  } else {
+    load_rda(rda.file.path)
   }
 
-  # if gene.name is not defined then let gene.name = goi
-  if(is.null(gene.name)){
-    gene.name <- gene.signature
-  }
+  message("Selecting protein-coding TPM values and normalising")
+  normed <- normalise_tcga(select_tcga_tpm(raw))
+  if (!dir.exists(data.dir)) dir.create(data.dir, recursive = TRUE)
+  utils::write.table(normed, file.path(data.dir, paste0("Normalised_filtered_", TCGA.dataset, "_RNAseq_data.txt")),
+                     sep = "\t", row.names = TRUE, quote = FALSE)
 
-  # Check if rda file path is provided, if yes then load data, if not then download data
-  if(is.null(rda.file.path)){
-    print("no file path provided, data will be downloaded")
+  strata <- stratify_by_expression(normed, gene.signature)
+  message("n high = ", length(strata$high), ", n low = ", length(strata$low))
 
-    raw.data <- download_tcga_rnaseq(dataset.name = TCGA.dataset,
-                                     raw.data.dir = paste0(data.dir, "GDCdata/"),
-                                     rda.dir = data.dir)
-
-  }else{
-    print("file path provided, data will loaded from file")
-
-    raw.data <- load.rda(path.to.rda = rda.file.path)
-
-  }
-
-  # process dataset
-  print("Processing and normalising dataset")
-
-  normed.data <- preprocess.TCGA(input.data = raw.data,
-                                 dataset.name = TCGA.dataset,
-                                 quantile.filt = TRUE,
-                                 save.normed.data = TRUE,
-                                 output.dir = data.dir)
-
-
-  # Extract expression, define threshold, and annotate patients as high or low exp
-  print("Threshold and define high and low expression patients")
-
-  threshold.list <- threshold.goi(input.data = normed.data,
-                                  goi = gene.signature)
-
-
-  # get clinical data and annotate patients as high or low exp
-  print("Getting clinical data and defining patients as high or low")
-
-  clinical.data <- annotate.clinical.data(patients.list = threshold.list,
-                                          dataset.name = TCGA.dataset)
-
-  # plotting overall survival
-  print("Plotting OS")
-
-  plot.OS(annotated.clin.data = clinical.data,
-          dataset.name = TCGA.dataset,
-          goi = gene.signature,
-          output.dir = plot.dir,
-          with.risk = TRUE,
-          with.conf = TRUE)
-
+  clinical <- TCGAbiolinks::GDCquery_clinic(TCGA.dataset, "clinical")
+  clinical <- label_signature_groups(clinical, strata$high, strata$low)
+  plot_overall_survival(clinical, TCGA.dataset, gene.name, output.dir = plot.dir)
+  invisible(clinical)
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

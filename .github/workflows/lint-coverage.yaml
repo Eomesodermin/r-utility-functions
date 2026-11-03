@@ -1,0 +1,32 @@
+name: lint-and-coverage
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint-and-coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::lintr, any::covr
+          needs: coverage
+      - name: Lint
+        run: lintr::lint_package()
+        shell: Rscript {0}
+        env:
+          LINTR_ERROR_ON_LINT: true
+      - name: Test coverage
+        run: |
+          cov <- covr::package_coverage()
+          print(cov)
+          pct <- covr::percent_coverage(cov)
+          cat(sprintf("Coverage: %.1f%%\n", pct))
+          if (pct < 80) stop("Coverage below 80%")
+        shell: Rscript {0}
