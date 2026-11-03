@@ -1,0 +1,9 @@
+pandoc: 3.8.3
+pkgdown: 2.2.1
+pkgdown_sha: ~
+articles:
+  usefulfunctions: usefulfunctions.html
+last_built: 2026-11-03T09:30Z
+urls:
+  reference: https://eomesodermin.github.io/r-utility-functions/reference
+  article: https://eomesodermin.github.io/r-utility-functions/articles
