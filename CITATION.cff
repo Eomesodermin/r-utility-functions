@@ -9,5 +9,6 @@ authors:
 repository-code: "https://github.com/Eomesodermin/r-utility-functions"
 url: "https://eomesodermin.github.io/r-utility-functions/"
 license: MIT
+doi: 10.5281/zenodo.23946454
 version: 0.3.0
 date-released: "2026-11-03"

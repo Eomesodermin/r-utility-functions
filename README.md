@@ -5,6 +5,7 @@
 [![lint-and-coverage](https://github.com/Eomesodermin/r-utility-functions/actions/workflows/lint-coverage.yaml/badge.svg)](https://github.com/Eomesodermin/r-utility-functions/actions/workflows/lint-coverage.yaml)
 [![pkgdown](https://github.com/Eomesodermin/r-utility-functions/actions/workflows/pkgdown.yaml/badge.svg)](https://eomesodermin.github.io/r-utility-functions/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.md)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23946454.svg)](https://doi.org/10.5281/zenodo.23946454)
 <!-- badges: end -->
 
 An R package of tested helpers for single-cell, bulk RNA-seq and cancer-genomics analyses: volcano
